@@ -1,0 +1,57 @@
+import pandas as pd
+
+# Load UNSW-NB15 dataset using raw string literals
+unsw_nb15 = pd.read_csv(r'C:\Users\Admin\Downloads\datasets\archive\NF-UNSW-NB15-v2.csv')
+
+# Load CICIDS2017 or IoT-23 dataset similarly
+cicids2017 = pd.read_csv(r'C:\Users\Admin\Downloads\datasets\archive\CICIDS2017.csv')  # Example path
+# or
+iot23 = pd.read_csv(r'C:\Users\Admin\Downloads\datasets\archive\IoT-23.csv')  # Example path
+
+# Check for missing values
+print(unsw_nb15.isnull().sum())
+print(cicids2017.isnull().sum())  # or
+print(iot23.isnull().sum())
+
+# Fill missing values with the median
+unsw_nb15.fillna(unsw_nb15.median(), inplace=True)
+cicids2017.fillna(cicids2017.median(), inplace=True)  # or
+iot23.fillna(iot23.median(), inplace=True)
+
+# Normalize numerical features
+from sklearn.preprocessing import StandardScaler
+
+numerical_features = unsw_nb15.select_dtypes(include=['float64', 'int64']).columns
+
+scaler = StandardScaler()
+unsw_nb15[numerical_features] = scaler.fit_transform(unsw_nb15[numerical_features])
+cicids2017[numerical_features] = scaler.transform(cicids2017[numerical_features])  # or
+iot23[numerical_features] = scaler.transform(iot23[numerical_features])
+
+# Encode categorical variables
+from sklearn.preprocessing import OneHotEncoder
+
+categorical_features = unsw_nb15.select_dtypes(include=['object']).columns
+
+encoder = OneHotEncoder(drop='first', sparse=False)
+encoded_unsw_nb15 = pd.DataFrame(encoder.fit_transform(unsw_nb15[categorical_features]))
+encoded_cicids2017 = pd.DataFrame(encoder.transform(cicids2017[categorical_features]))  # or
+encoded_iot23 = pd.DataFrame(encoder.transform(iot23[categorical_features]))
+
+unsw_nb15 = pd.concat([unsw_nb15.drop(columns=categorical_features), encoded_unsw_nb15], axis=1)
+cicids2017 = pd.concat([cicids2017.drop(columns=categorical_features), encoded_cicids2017], axis=1)  # or
+iot23 = pd.concat([iot23.drop(columns=categorical_features), encoded_iot23], axis=1)
+
+# Ensure both DataFrames have the same columns
+common_features = unsw_nb15.columns.intersection(cicids2017.columns)  # or iot23.columns
+
+unsw_nb15 = unsw_nb15[common_features]
+cicids2017 = cicids2017[common_features]  # or
+iot23 = iot23[common_features]
+
+# Concatenate the datasets if required
+combined_dataset = pd.concat([unsw_nb15, cicids2017], ignore_index=True)  # or
+combined_dataset = pd.concat([unsw_nb15, iot23], ignore_index=True)
+
+# Save the preprocessed dataset
+combined_dataset.to_csv(r'C:\Users\Admin\Downloads\datasets\preprocessed_combined_dataset.csv', index=False)
